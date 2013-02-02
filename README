@@ -1,0 +1,9 @@
+DicePhys
+========
+
+Dice physics simulation made to investigate the probability of landing on a
+particular face of a non-square dice.
+
+See COPYING for license.
+
+Copyright (C) 2013 Martin Uhrin
