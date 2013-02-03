@@ -8,12 +8,18 @@ include_directories(
 ## dicephys
 
 set(dicephys_Header_Files__
+  Dice.h
   DicePhys.h
+  World.h
+  WorldObject.h
 )
 source_group("Header Files" FILES ${dicephys_Header_Files__})
 
 set(dicephys_Source_Files__
+  Dice.cpp
   DicePhys.cpp
+  World.cpp
+  WorldObject.cpp
 )
 source_group("Source Files" FILES ${dicephys_Source_Files__})
 
