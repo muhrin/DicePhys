@@ -68,7 +68,7 @@ struct InputOptions
 
 // FUNCTION PROTOTYPES ////////////////////
 void runSimulation(const InputOptions & in);
-btScalar random();
+btScalar myRandom();
 int processInputOptions(InputOptions & in, const int argc, char * argv[]);
 
 WorldObjectPtr createGround(const InputOptions & in);
@@ -86,7 +86,7 @@ int main(const int argc, char * argv[])
     srand(static_cast<unsigned int>(time(NULL)));
 
   // Mamke sure the random number generator has been called at least once
-  random();
+  myRandom();
 
   runSimulation(in);
 
@@ -142,7 +142,7 @@ void runSimulation(const InputOptions & in)
   printResults(results);
 }
 
-btScalar random()
+btScalar myRandom()
 {
   return static_cast<btScalar>(::std::rand()) / static_cast<btScalar>(RAND_MAX);
 }
@@ -240,16 +240,16 @@ WorldObjectPtr createGround(const InputOptions & in)
 
   // set up the linear and angular velocities
   btVector3 vel(0.0, 0.0, 0.0);
-  vel.setX(in.velocity == 0.0 ? random() : in.velocity);
+  vel.setX(in.velocity == 0.0 ? myRandom() : in.velocity);
   dice->setInitialVel(vel);
 
   if(dice->is2D())
-    vel.setValue(0.0, 0.0, random());
+    vel.setValue(0.0, 0.0, myRandom());
   else
-    vel.setValue(random(), random(), random());
+    vel.setValue(myRandom(), myRandom(), myRandom());
   
   vel.normalize();
-  vel *= in.angularVelocity == 0.0 ? random() : in.angularVelocity;
+  vel *= in.angularVelocity == 0.0 ? myRandom() : in.angularVelocity;
   dice->setInitialAngularVel(vel);
 
   return dice;

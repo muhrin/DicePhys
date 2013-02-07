@@ -12,6 +12,8 @@
 // INCLUDES /////////////////////////////////////////////
 #include "DicePhys.h"
 
+#include <ostream>
+
 #include <boost/optional.hpp>
 #include <boost/scoped_ptr.hpp>
 
