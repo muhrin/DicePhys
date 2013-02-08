@@ -44,6 +44,9 @@ myStepsize(stepsize)
   );
 
 	myDynamicsWorld->setGravity(btVector3(0,GRAVITY,0));
+  btContactSolverInfo& info = myDynamicsWorld->getSolverInfo();
+  info.m_restingContactRestitutionThreshold = 1e30;
+  info.m_splitImpulse = 1; //enable split impulse feature
 }
 
 World::~World()

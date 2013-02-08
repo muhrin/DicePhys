@@ -12,6 +12,7 @@
 // INCLUDES /////////////////////////////////////////////
 #include "WorldObject.h"
 
+#include <iostream>
 #include <ostream>
 
 // FORWARD DECLARATIONS ////////////////////////////////////
