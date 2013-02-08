@@ -76,7 +76,7 @@ struct InputOptions
   btScalar height;
   btScalar depth;
   btScalar initialY;
-  btScalar mass;
+  btScalar density;
   btScalar friction;
   btScalar restitution;
   unsigned int numRolls;
@@ -92,6 +92,8 @@ void validate(boost::any & v, const std::vector<std::string> & values, MinMax * 
 
 WorldObjectPtr createGround(const InputOptions & in);
 ::std::auto_ptr<dicephys::Dice> createDice(const InputOptions & in);
+btScalar mass(const btScalar width, const btScalar height, const btScalar density);
+btScalar mass(const btScalar width, const btScalar height, const btScalar depth, const btScalar density);
 void printResults(const unsigned int (& results)[4]);
 ::std::ostream & operator <<(::std::ostream & os, const MinMax & minMax)
 {
@@ -200,7 +202,7 @@ int processInputOptions(InputOptions & in, const int argc, char * argv[])
       ("velocity,v", po::value<MinMax>(&in.velocity)->default_value(MinMax(0.0))->multitoken(), "velocity (single number or two for random range)")
       ("angular-velocity,a", po::value<MinMax>(&in.angularVelocity)->default_value(MinMax(0.0))->multitoken(), "angular velocity (single number or two for random range)")
       ("deterministic,D", po::value<bool>(&in.deterministic)->default_value(false)->zero_tokens(), "deterministic mode (no randomness)")
-      ("mass,m", po::value<btScalar>(&in.mass)->default_value(1.0), "dice mass")
+      ("density,D", po::value<btScalar>(&in.density)->default_value(1.0), "dice density")
       ("width,w", po::value<btScalar>(&in.width)->default_value(1.0), "dice width")
       ("height,h", po::value<btScalar>(&in.height)->default_value(1.0), "dice height")
       ("depth,d", po::value<btScalar>(&in.depth)->default_value(1.0), "dice depth")
@@ -300,9 +302,9 @@ WorldObjectPtr createGround(const InputOptions & in)
 {
   ::std::auto_ptr<dicephys::Dice> dice;
   if(in.depth == 0.0) // 2D
-    dice.reset(new dicephys::Dice(in.width, in.height, in.mass)); 
+    dice.reset(new dicephys::Dice(in.width, in.height, mass(in.width, in.height, in.density))); 
   else // 3D
-    dice.reset(new dicephys::Dice(in.width, in.height, in.depth, in.mass));
+    dice.reset(new dicephys::Dice(in.width, in.height, in.depth, mass(in.width, in.height, in.depth, in.density)));
 
   const btScalar initialY = ::std::max(::std::max(in.height, in.width), in.depth) + in.initialY;
   dice->setInitialPos(btVector3(0, initialY, 0));
@@ -328,6 +330,15 @@ WorldObjectPtr createGround(const InputOptions & in)
   return dice;
 }
 
+btScalar mass(const btScalar width, const btScalar height, const btScalar density)
+{
+  return width * height * density;
+}
+
+btScalar mass(const btScalar width, const btScalar height, const btScalar depth, const btScalar density)
+{
+  return width * height * depth * density;
+}
 
 void printResults(const unsigned int (& results)[4])
 {
