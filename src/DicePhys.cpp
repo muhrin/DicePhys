@@ -13,6 +13,7 @@
 #include <iostream>
 #include <time.h>
 
+#include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -35,6 +36,9 @@ const int MAX_SUB_STEPS = 2;
 const btScalar FIXED_TIME_STEP = 1./120.;
 const btScalar TIME_STEP = FIXED_TIME_STEP;
 
+const btScalar GROUND_FRICTION = 1.0;
+const btScalar GROUND_RESTITUTION = 1.0;
+
 const btVector3 X_VECTOR(static_cast<btScalar>(1.0), static_cast<btScalar>(0.0), static_cast<btScalar>(0.0));
 const btVector3 Y_VECTOR(static_cast<btScalar>(0.0), static_cast<btScalar>(1.0), static_cast<btScalar>(0.0));
 const btVector3 Z_VECTOR(static_cast<btScalar>(0.0), static_cast<btScalar>(0.0), static_cast<btScalar>(1.0));
@@ -48,32 +52,58 @@ struct ScopedPtr
   typedef ::boost::scoped_ptr<T> Type;
 };
 
+struct MinMax
+{
+  MinMax(): min(0.), max(0.) {}
+
+  explicit MinMax(const btScalar minMax): min(minMax), max(minMax) {}
+
+  MinMax(const btScalar min_, const btScalar max_):
+  min(::std::min(min_, max_)),
+  max(::std::max(min_, max_))
+  {}
+
+  btScalar min;
+  btScalar max;
+};
+
 struct InputOptions
 {
-  btScalar velocity;
-  btScalar angularVelocity;
+  MinMax velocity;
+  MinMax angularVelocity;
   bool deterministic;
   btScalar width;
   btScalar height;
   btScalar depth;
   btScalar initialY;
   btScalar mass;
-  btScalar diceFriction;
-  btScalar diceRestitution;
-  btScalar groundFriction;
-  btScalar groundRestitution;
+  btScalar friction;
+  btScalar restitution;
   unsigned int numRolls;
 };
 
 
 // FUNCTION PROTOTYPES ////////////////////
 void runSimulation(const InputOptions & in);
-btScalar random();
+btScalar random(btScalar from = 0.0, btScalar to = 1.0);
+btScalar random(const MinMax & minMax);
 int processInputOptions(InputOptions & in, const int argc, char * argv[]);
+void validate(boost::any & v, const std::vector<std::string> & values, MinMax * const minMax, int);
 
 WorldObjectPtr createGround(const InputOptions & in);
 ::std::auto_ptr<dicephys::Dice> createDice(const InputOptions & in);
 void printResults(const unsigned int (& results)[4]);
+::std::ostream & operator <<(::std::ostream & os, const MinMax & minMax)
+{
+  if(minMax.min == minMax.max)
+    os << minMax.min;
+  else
+    os << minMax.min << " " << minMax.max;
+  return os;
+}
+
+
+// MAIN ////////////////////////////////////////
 
 int main(const int argc, char * argv[])
 {
@@ -142,9 +172,17 @@ void runSimulation(const InputOptions & in)
   printResults(results);
 }
 
-btScalar random()
+btScalar random(btScalar from, btScalar to)
 {
-  return static_cast<btScalar>(::std::rand()) / static_cast<btScalar>(RAND_MAX);
+  if(to < from)
+    ::std::swap(from, to);
+  const btScalar range = to - from;
+  return range * static_cast<btScalar>(::std::rand()) / static_cast<btScalar>(RAND_MAX) + from;
+}
+
+btScalar random(const MinMax & minMax)
+{
+  return random(minMax.min, minMax.max);
 }
 
 int processInputOptions(InputOptions & in, const int argc, char * argv[])
@@ -159,18 +197,16 @@ int processInputOptions(InputOptions & in, const int argc, char * argv[])
       "\nOptions");
     desc.add_options()
       ("help", "Show help message")
-      ("velocity,v", po::value<btScalar>(&in.velocity)->default_value(0.0), "velocity (0 = random)")
-      ("angular-velocity,a", po::value<btScalar>(&in.angularVelocity)->default_value(0.0), "angular velocity (0 = random)")
+      ("velocity,v", po::value<MinMax>(&in.velocity)->default_value(MinMax(0.0))->multitoken(), "velocity (single number or two for random range)")
+      ("angular-velocity,a", po::value<MinMax>(&in.angularVelocity)->default_value(MinMax(0.0))->multitoken(), "angular velocity (single number or two for random range)")
       ("deterministic,D", po::value<bool>(&in.deterministic)->default_value(false)->zero_tokens(), "deterministic mode (no randomness)")
       ("mass,m", po::value<btScalar>(&in.mass)->default_value(1.0), "dice mass")
       ("width,w", po::value<btScalar>(&in.width)->default_value(1.0), "dice width")
       ("height,h", po::value<btScalar>(&in.height)->default_value(1.0), "dice height")
       ("depth,d", po::value<btScalar>(&in.depth)->default_value(1.0), "dice depth")
       ("initial-y,y", po::value<btScalar>(&in.initialY)->default_value(2.0), "initial y-coordinate (maximum dimension of dice will be added)")
-      ("dice-friction,f", po::value<btScalar>(&in.diceFriction)->default_value(0.5), "dice friction")
-      ("dice-restitution,r", po::value<btScalar>(&in.diceRestitution)->default_value(0.0), "dice restitution")
-      ("ground-friction,F", po::value<btScalar>(&in.groundFriction)->default_value(0.5), "ground friction")
-      ("ground-restitution,R", po::value<btScalar>(&in.groundRestitution)->default_value(0.0), "ground restitution")
+      ("friction,f", po::value<btScalar>(&in.friction)->default_value(0.5), "dice friction")
+      ("restitution,r", po::value<btScalar>(&in.restitution)->default_value(0.3), "dice restitution")
       ("num-rolls,n", po::value<unsigned int>(&in.numRolls)->default_value(1), "number of rolls")
     ;
 
@@ -198,6 +234,33 @@ int processInputOptions(InputOptions & in, const int argc, char * argv[])
   return RESULT_SUCCESS;
 }
 
+void validate(boost::any & v, const std::vector<std::string> & values, MinMax * const, int)
+{
+    using namespace boost::program_options;
+
+    // Make sure no previous assignment to 'v' was made.
+    validators::check_first_occurrence(v);
+
+    if(values.empty() || values.size() > 2)
+      throw validation_error(validation_error::invalid_option_value);
+
+    MinMax minMax;
+    try
+    {
+      minMax.min = boost::lexical_cast<btScalar>(values[0]);
+
+      if(values.size() == 2)
+        minMax.max = boost::lexical_cast<btScalar>(values[1]);
+      else
+        minMax.max = minMax.min;
+      v = minMax;
+    }
+    catch(const ::boost::bad_lexical_cast & /*e*/)
+    {
+      throw validation_error(validation_error::invalid_option_value);
+    }
+}
+
 bool stableEq(const double x1, const double x2, const double tol)
 {
   if(x1 < (x2 + tol) && x1 > x2 - tol)
@@ -215,8 +278,8 @@ WorldObjectPtr createGround(const InputOptions & in)
   );
   
   // Set physical properties
-  ground->setFriction(in.groundFriction);
-  ground->setRestitution(in.groundRestitution);
+  ground->setFriction(GROUND_FRICTION);
+  ground->setRestitution(GROUND_RESTITUTION);
 
   ground->setInitialPos(btVector3(0.0, -50.0, 0.0));
 
@@ -232,15 +295,15 @@ WorldObjectPtr createGround(const InputOptions & in)
     dice.reset(new dicephys::Dice(in.width, in.height, in.depth, in.mass));
 
   const btScalar initialY = ::std::max(::std::max(in.height, in.width), in.depth) + in.initialY;
-  dice->setInitialPos(btVector3(2, initialY, 0));
+  dice->setInitialPos(btVector3(0, initialY, 0));
 
   // Set the physical properties
-  dice->setFriction(in.diceFriction);
-  dice->setRestitution(in.diceRestitution);
+  dice->setFriction(in.friction);
+  dice->setRestitution(in.restitution);
 
   // set up the linear and angular velocities
   btVector3 vel(0.0, 0.0, 0.0);
-  vel.setX(in.velocity == 0.0 ? random() : in.velocity);
+  vel.setX(random(in.velocity));
   dice->setInitialVel(vel);
 
   if(dice->is2D())
@@ -249,7 +312,7 @@ WorldObjectPtr createGround(const InputOptions & in)
     vel.setValue(random(), random(), random());
   
   vel.normalize();
-  vel *= in.angularVelocity == 0.0 ? random() : in.angularVelocity;
+  vel *= random(in.angularVelocity);
   dice->setInitialAngularVel(vel);
 
   return dice;

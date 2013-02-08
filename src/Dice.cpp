@@ -47,19 +47,19 @@ Dice::Orientation::Value Dice::getUpFace() const
   if(!myRigidBody.get())
     return Orientation::UNKNOWN;
 
-  if(myRigidBody.get())
-  {
-    btTransform trans;
-    myRigidBody->getMotionState()->getWorldTransform(trans);
-    const btMatrix3x3 rot = trans.getBasis();
+  btTransform trans;
+  myRigidBody->getMotionState()->getWorldTransform(trans);
+  const btMatrix3x3 rot = trans.getBasis();
 
-    if(isFacingDirection(Y_VECTOR, X_VECTOR, rot))
-      return Orientation::WIDTH;
-    else if(isFacingDirection(Y_VECTOR, Y_VECTOR, rot))
-      return Orientation::HEIGHT;
-    else if(isFacingDirection(Y_VECTOR, Z_VECTOR, rot))
-      return Orientation::HEIGHT;
-  }
+  if(isFacingDirection(Y_VECTOR, X_VECTOR, rot))
+    return Orientation::WIDTH;
+  else if(isFacingDirection(Y_VECTOR, Y_VECTOR, rot))
+    return Orientation::HEIGHT;
+  else if(isFacingDirection(Y_VECTOR, Z_VECTOR, rot))
+    return Orientation::DEPTH;
+
+  //btVector3 f = myRigidBody->getTotalForce();
+  //btVector3 t = myRigidBody->getTotalTorque();
 
   return Orientation::UNKNOWN;
 }
