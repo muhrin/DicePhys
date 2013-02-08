@@ -8,6 +8,8 @@
 // INCLUDES //////////////////////////////////
 #include "World.h"
 
+#include <limits>
+
 #include <boost/foreach.hpp>
 
 #include "WorldObject.h"
@@ -45,7 +47,7 @@ myStepsize(stepsize)
 
 	myDynamicsWorld->setGravity(btVector3(0,GRAVITY,0));
   btContactSolverInfo& info = myDynamicsWorld->getSolverInfo();
-  info.m_restingContactRestitutionThreshold = 1e30;
+  info.m_restingContactRestitutionThreshold = ::std::numeric_limits<btScalar>::max();
   info.m_splitImpulse = 1; //enable split impulse feature
 }
 

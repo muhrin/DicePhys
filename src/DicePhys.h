@@ -10,6 +10,8 @@
 
 // INCLUDES //////////////////////////////////
 
+#include <boost/version.hpp>
+
 // Bullet physics library
 #include <btBulletDynamicsCommon.h>
 
@@ -17,6 +19,10 @@
 // DEFINES ///////////////////
 #ifndef NULL
 #  define NULL 0
+#endif
+
+#if (BOOST_VERSION / 100000) <= 1 && ((BOOST_VERSION / 100) % 1000) <= 41
+#  define DICEPHYS_BOOST_PO_OLD
 #endif
 
 // CONSTANTS ///////////////////
@@ -27,4 +33,4 @@ extern const btVector3 Z_VECTOR;
 // FUNCTIONS //////////////////
 bool stableEq(const double x1, const double x2, const double tol = 1e-5);
 
-#endif DICEPHYS_H
+#endif /* DICEPHYS_H */

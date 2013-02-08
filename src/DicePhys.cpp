@@ -242,7 +242,13 @@ void validate(boost::any & v, const std::vector<std::string> & values, MinMax * 
     validators::check_first_occurrence(v);
 
     if(values.empty() || values.size() > 2)
+    {
+#ifdef DICEPHYS_BOOST_PO_OLD
+      throw validation_error("Must contain one or two values");
+#else
       throw validation_error(validation_error::invalid_option_value);
+#endif
+    }
 
     MinMax minMax;
     try
@@ -257,7 +263,11 @@ void validate(boost::any & v, const std::vector<std::string> & values, MinMax * 
     }
     catch(const ::boost::bad_lexical_cast & /*e*/)
     {
+#ifdef DICEPHYS_BOOST_PO_OLD
+      throw validation_error("Couldn't convert option value to number");
+#else
       throw validation_error(validation_error::invalid_option_value);
+#endif
     }
 }
 
@@ -303,7 +313,7 @@ WorldObjectPtr createGround(const InputOptions & in)
 
   // set up the linear and angular velocities
   btVector3 vel(0.0, 0.0, 0.0);
-  vel.setX(random(in.velocity));
+  vel.setX(myRandom(in.velocity));
   dice->setInitialVel(vel);
 
   if(dice->is2D())
@@ -312,7 +322,7 @@ WorldObjectPtr createGround(const InputOptions & in)
     vel.setValue(myRandom(), myRandom(), myRandom());
   
   vel.normalize();
-  vel *= random(in.angularVelocity);
+  vel *= myRandom(in.angularVelocity);
   dice->setInitialAngularVel(vel);
 
   return dice;
