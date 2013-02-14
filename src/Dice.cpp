@@ -58,9 +58,6 @@ Dice::Orientation::Value Dice::getUpFace() const
   else if(isFacingDirection(Y_VECTOR, Z_VECTOR, rot))
     return Orientation::DEPTH;
 
-  //btVector3 f = myRigidBody->getTotalForce();
-  //btVector3 t = myRigidBody->getTotalTorque();
-
   return Orientation::UNKNOWN;
 }
 
@@ -77,3 +74,18 @@ bool Dice::isFacingDirection(const btVector3 & facing_, const btVector3 & direct
 }
 
 }
+
+::std::ostream & operator <<(::std::ostream & os, const dicephys::Dice::Orientation::Value & orient)
+{
+  if(orient == dicephys::Dice::Orientation::WIDTH)
+    os << "WIDTH";
+  else if(orient == dicephys::Dice::Orientation::HEIGHT)
+    os << "HEIGHT";
+  else if(orient == dicephys::Dice::Orientation::DEPTH)
+    os << "DEPTH";
+  else
+    os << "UNKNOWN";
+  return os;
+}
+
+

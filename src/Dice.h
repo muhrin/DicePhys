@@ -53,17 +53,6 @@ private:
 
 }
 
-inline ::std::ostream & operator <<(::std::ostream & os, const dicephys::Dice::Orientation::Value & orient)
-{
-  if(orient == dicephys::Dice::Orientation::WIDTH)
-    os << "WIDTH";
-  else if(orient == dicephys::Dice::Orientation::HEIGHT)
-    os << "HEIGHT";
-  else if(orient == dicephys::Dice::Orientation::DEPTH)
-    os << "DEPTH";
-  else
-    os << "UNKNOWN";
-  return os;
-}
+::std::ostream & operator <<(::std::ostream & os, const dicephys::Dice::Orientation::Value & orient);
 
 #endif /* DICE_H */

@@ -82,6 +82,62 @@ struct InputOptions
   unsigned int numRolls;
 };
 
+class AtRestChecker
+{
+public:
+  static const size_t HISTORY_LENGTH = 3;
+
+  AtRestChecker(): myHaveHistory(false), myCurrentIdx(0)
+  {
+    for(size_t i = 0; i < HISTORY_LENGTH; ++i)
+    {
+      myVelHistory[i].setZero();
+      myAngVelHistory[i].setZero();
+    }
+  }
+
+  void insert(const btVector3 & vel, const btVector3 & angVel)
+  {
+    const size_t idx = nextIndex();
+    myVelHistory[idx] = vel;
+    myAngVelHistory[idx] = angVel;
+  }
+
+  bool isAtRest() const
+  {
+    if(!myHaveHistory)
+      return false;
+
+    btVector3 totalVel, totalAngVel;
+    totalVel.setZero();
+    totalAngVel.setZero();
+    for(size_t i = 0; i < HISTORY_LENGTH; ++i)
+    {
+      totalVel += myVelHistory[i];
+      totalAngVel += myAngVelHistory[i];
+    }
+    return totalVel.length() < 1e-4 && totalAngVel.length() < 1e-4;
+  }
+
+private:
+
+  unsigned int nextIndex()
+  {
+    if(++myCurrentIdx > HISTORY_LENGTH - 1)
+    {
+      myCurrentIdx = 0;
+      myHaveHistory = true;
+    }
+    return myCurrentIdx;
+  }
+
+  bool myHaveHistory;
+  size_t myCurrentIdx;
+  btVector3 myVelHistory[HISTORY_LENGTH];
+  btVector3 myAngVelHistory[HISTORY_LENGTH];
+
+};
+
 
 // FUNCTION PROTOTYPES ////////////////////
 void runSimulation(const InputOptions & in);
@@ -150,6 +206,7 @@ void runSimulation(const InputOptions & in)
     }
 
     bool finished = false;
+    AtRestChecker restChecker;
     for(unsigned int i = 1; i < MAX_STEPS && !finished; i++)
     {
       world.step();
@@ -160,9 +217,8 @@ void runSimulation(const InputOptions & in)
         dice.printFacingVector(::std::cout) << ::std::endl;
       }
 
-      vel = *dice.getLinearVelocity();
-      angVel = *dice.getAngularVelocity();
-      if(vel.length() < MIN_VEL && angVel.length() < MIN_VEL)
+      restChecker.insert(*dice.getLinearVelocity(), *dice.getAngularVelocity());
+      if(restChecker.isAtRest())
         finished = true;
     }
 
@@ -202,7 +258,7 @@ int processInputOptions(InputOptions & in, const int argc, char * argv[])
       ("velocity,v", po::value<MinMax>(&in.velocity)->default_value(MinMax(0.0))->multitoken(), "velocity (single number or two for random range)")
       ("angular-velocity,a", po::value<MinMax>(&in.angularVelocity)->default_value(MinMax(0.0))->multitoken(), "angular velocity (single number or two for random range)")
       ("deterministic,D", po::value<bool>(&in.deterministic)->default_value(false)->zero_tokens(), "deterministic mode (no randomness)")
-      ("density,D", po::value<btScalar>(&in.density)->default_value(1.0), "dice density")
+      ("density,p", po::value<btScalar>(&in.density)->default_value(1.0), "dice density")
       ("width,w", po::value<btScalar>(&in.width)->default_value(1.0), "dice width")
       ("height,h", po::value<btScalar>(&in.height)->default_value(1.0), "dice height")
       ("depth,d", po::value<btScalar>(&in.depth)->default_value(1.0), "dice depth")
