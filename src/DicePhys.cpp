@@ -29,7 +29,7 @@ typedef ::std::auto_ptr<dicephys::WorldObject> WorldObjectPtr;
 // CONSTANTS ////////////////////////////
 const int RESULT_SUCCESS = 0;
 
-const unsigned int MAX_STEPS = 100000;
+const unsigned int MAX_STEPS = 2000000;
 const btScalar MIN_VEL(0.0001);
 
 const int MAX_SUB_STEPS = 2;
@@ -85,7 +85,7 @@ struct InputOptions
 class AtRestChecker
 {
 public:
-  static const size_t HISTORY_LENGTH = 3;
+  static const size_t HISTORY_LENGTH = 10;
 
   AtRestChecker(): myHaveHistory(false), myCurrentIdx(0)
   {

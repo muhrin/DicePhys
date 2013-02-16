@@ -14,8 +14,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include <btBulletDynamicsCommon.h>
-
+#include "DicePhys.h"
 
 namespace dicephys {
 

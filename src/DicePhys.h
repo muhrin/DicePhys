@@ -12,6 +12,7 @@
 
 #include <boost/version.hpp>
 
+#define BT_USE_DOUBLE_PRECISION
 // Bullet physics library
 #include <btBulletDynamicsCommon.h>
 

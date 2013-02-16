@@ -17,7 +17,7 @@
 #include <boost/optional.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include <btBulletDynamicsCommon.h>
+#include "DicePhys.h"
 
 // FORWARD DECLARATIONS ////////////////////////////////////
 
