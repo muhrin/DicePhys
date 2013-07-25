@@ -8,6 +8,8 @@
 // INCLUDES //////////////////////////////////
 #include "Dice.h"
 
+#include <cmath>
+
 // NAMESPACES ////////////////////////////////
 
 
@@ -67,7 +69,8 @@ bool Dice::isFacingDirection(const btVector3 & facing_, const btVector3 & direct
   currentlyFacing.normalize();
 
   const btVector3 facing = facing_.normalized();
-  if(stableEq(abs(facing.dot(currentlyFacing)), 1.0))
+  const btScalar dot = ::std::abs(facing.dot(currentlyFacing));
+  if(stableEq(dot, 1.0))
     return true;
 
   return false;

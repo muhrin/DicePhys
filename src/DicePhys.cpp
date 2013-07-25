@@ -29,7 +29,7 @@ typedef ::std::auto_ptr<dicephys::WorldObject> WorldObjectPtr;
 // CONSTANTS ////////////////////////////
 const int RESULT_SUCCESS = 0;
 
-const unsigned int MAX_STEPS = 2000000;
+const unsigned int MAX_STEPS = 2000;
 const btScalar MIN_VEL(0.0001);
 
 const int MAX_SUB_STEPS = 2;
@@ -75,7 +75,7 @@ struct InputOptions
   btScalar width;
   btScalar height;
   btScalar depth;
-  btScalar initialY;
+  MinMax initialY;
   btScalar density;
   btScalar friction;
   btScalar restitution;
@@ -262,7 +262,7 @@ int processInputOptions(InputOptions & in, const int argc, char * argv[])
       ("width,w", po::value<btScalar>(&in.width)->default_value(1.0), "dice width")
       ("height,h", po::value<btScalar>(&in.height)->default_value(1.0), "dice height")
       ("depth,d", po::value<btScalar>(&in.depth)->default_value(1.0), "dice depth")
-      ("initial-y,y", po::value<btScalar>(&in.initialY)->default_value(2.0), "initial y-coordinate (maximum dimension of dice will be added)")
+      ("initial-y,y", po::value<MinMax>(&in.initialY)->default_value(MinMax(0.5, 2.0))->multitoken(), "initial y-coordinate (maximum dimension of dice will be added)")
       ("friction,f", po::value<btScalar>(&in.friction)->default_value(0.5), "dice friction")
       ("restitution,r", po::value<btScalar>(&in.restitution)->default_value(0.3), "dice restitution")
       ("num-rolls,n", po::value<unsigned int>(&in.numRolls)->default_value(1), "number of rolls")
@@ -362,7 +362,7 @@ WorldObjectPtr createGround(const InputOptions & in)
   else // 3D
     dice.reset(new dicephys::Dice(in.width, in.height, in.depth, mass(in.width, in.height, in.depth, in.density)));
 
-  const btScalar initialY = ::std::max(::std::max(in.height, in.width), in.depth) + in.initialY;
+  const btScalar initialY = ::std::max(::std::max(in.height, in.width), in.depth) + myRandom(in.initialY);
   dice->setInitialPos(btVector3(0, initialY, 0));
 
   // Set the physical properties
