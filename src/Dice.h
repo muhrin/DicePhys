@@ -39,6 +39,7 @@ public:
     const btScalar depth,
     const btScalar mass
   );
+  virtual ~Dice() {}
 
   bool is2D() const;
   Orientation::Value getUpFace() const;

@@ -28,7 +28,7 @@ myStepsize(stepsize)
   myCollisionConfiguration.reset(new btDefaultCollisionConfiguration());
 
 	///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
-  myCollisionDispatcher.reset(new	btCollisionDispatcher(myCollisionConfiguration.get()));
+  myCollisionDispatcher.reset(new btCollisionDispatcher(myCollisionConfiguration.get()));
 
 	///btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
   myBroadphaseInterface.reset(new btDbvtBroadphase());
@@ -45,7 +45,7 @@ myStepsize(stepsize)
     )
   );
 
-	myDynamicsWorld->setGravity(btVector3(0,GRAVITY,0));
+  myDynamicsWorld->setGravity(btVector3(0,GRAVITY,0));
   btContactSolverInfo& info = myDynamicsWorld->getSolverInfo();
   info.m_restingContactRestitutionThreshold = ::std::numeric_limits<int>::max();
   info.m_splitImpulse = 1; //enable split impulse feature

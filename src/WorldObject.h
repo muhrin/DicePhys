@@ -32,7 +32,7 @@ public:
   typedef ::boost::optional<btVector3> OptionalVec3;
 
   WorldObject(btCollisionShape * const shape, const btScalar mass);
-  ~WorldObject();
+  virtual ~WorldObject();
 
   void setInitialPos(const btVector3 & pos);
   void setInitialVel(const btVector3 & vel);

@@ -70,7 +70,7 @@ bool Dice::isFacingDirection(const btVector3 & facing_, const btVector3 & direct
 
   const btVector3 facing = facing_.normalized();
   const btScalar dot = ::std::abs(facing.dot(currentlyFacing));
-  if(stableEq(dot, 1.0))
+  if(stableEq(dot, 1.0, 1e-4))
     return true;
 
   return false;

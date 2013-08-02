@@ -29,12 +29,12 @@ typedef ::std::auto_ptr<dicephys::WorldObject> WorldObjectPtr;
 // CONSTANTS ////////////////////////////
 const int RESULT_SUCCESS = 0;
 
-const unsigned int MAX_STEPS = 2000;
+const unsigned int MAX_STEPS = 20000000;
 const btScalar MIN_VEL(0.0001);
 
-const int MAX_SUB_STEPS = 2;
-const btScalar FIXED_TIME_STEP = 1./120.;
-const btScalar TIME_STEP = FIXED_TIME_STEP;
+//const int MAX_SUB_STEPS = 2;
+//const btScalar FIXED_TIME_STEP = 0.1 * 1./120.;
+//const btScalar TIME_STEP = FIXED_TIME_STEP;
 
 const btScalar GROUND_FRICTION = 1.0;
 const btScalar GROUND_RESTITUTION = 1.0;
@@ -79,6 +79,7 @@ struct InputOptions
   btScalar density;
   btScalar friction;
   btScalar restitution;
+  btScalar timestep;
   unsigned int numRolls;
 };
 
@@ -150,7 +151,7 @@ WorldObjectPtr createGround(const InputOptions & in);
 ::std::auto_ptr<dicephys::Dice> createDice(const InputOptions & in);
 btScalar mass(const btScalar width, const btScalar height, const btScalar density);
 btScalar mass(const btScalar width, const btScalar height, const btScalar depth, const btScalar density);
-void printResults(const unsigned int (& results)[4]);
+void printResults(const unsigned int (& results)[8]);
 ::std::ostream & operator <<(::std::ostream & os, const MinMax & minMax)
 {
   if(minMax.min == minMax.max)
@@ -172,6 +173,8 @@ int main(const int argc, char * argv[])
 
   if(!in.deterministic)
     srand(static_cast<unsigned int>(time(NULL)));
+  else
+    srand(2385);
 
   // Mamke sure the random number generator has been called at least once
   myRandom();
@@ -183,11 +186,11 @@ int main(const int argc, char * argv[])
 
 void runSimulation(const InputOptions & in)
 {
-  dicephys::World world;
+  dicephys::World world(in.timestep);
   world.insert(createGround(in));
 
-  unsigned int results[4];
-  memset(results, 0, sizeof(unsigned int) * 4);
+  unsigned int results[8];
+  memset(results, 0, sizeof(unsigned int) * 8);
 
   btVector3 pos;
   btVector3 vel;
@@ -207,22 +210,25 @@ void runSimulation(const InputOptions & in)
 
     bool finished = false;
     AtRestChecker restChecker;
-    for(unsigned int i = 1; i < MAX_STEPS && !finished; i++)
+    unsigned int step;
+    for(step = 1; step < MAX_STEPS && !finished; step++)
     {
       world.step();
 
       if(in.numRolls == 1)
       {
-        ::std::cout << i << " ";
+        ::std::cout << step << " ";
         dice.printFacingVector(::std::cout) << ::std::endl;
       }
-
       restChecker.insert(*dice.getLinearVelocity(), *dice.getAngularVelocity());
       if(restChecker.isAtRest())
         finished = true;
     }
 
-    ++results[dice.getUpFace()];
+    if(step < MAX_STEPS)
+      ++results[dice.getUpFace()];
+    else
+      ++results[dice.getUpFace() + 4];
 
     world.remove(dice);
   }
@@ -258,13 +264,14 @@ int processInputOptions(InputOptions & in, const int argc, char * argv[])
       ("velocity,v", po::value<MinMax>(&in.velocity)->default_value(MinMax(0.0))->multitoken(), "velocity (single number or two for random range)")
       ("angular-velocity,a", po::value<MinMax>(&in.angularVelocity)->default_value(MinMax(0.0))->multitoken(), "angular velocity (single number or two for random range)")
       ("deterministic,D", po::value<bool>(&in.deterministic)->default_value(false)->zero_tokens(), "deterministic mode (no randomness)")
-      ("density,p", po::value<btScalar>(&in.density)->default_value(1.0), "dice density")
+      ("density,p", po::value<btScalar>(&in.density)->default_value(800.0), "dice density")
       ("width,w", po::value<btScalar>(&in.width)->default_value(1.0), "dice width")
       ("height,h", po::value<btScalar>(&in.height)->default_value(1.0), "dice height")
       ("depth,d", po::value<btScalar>(&in.depth)->default_value(1.0), "dice depth")
       ("initial-y,y", po::value<MinMax>(&in.initialY)->default_value(MinMax(0.5, 2.0))->multitoken(), "initial y-coordinate (maximum dimension of dice will be added)")
       ("friction,f", po::value<btScalar>(&in.friction)->default_value(0.5), "dice friction")
       ("restitution,r", po::value<btScalar>(&in.restitution)->default_value(0.3), "dice restitution")
+      ("timestep,t", po::value<btScalar>(&in.timestep)->default_value(1.0/120.0), "timestep")
       ("num-rolls,n", po::value<unsigned int>(&in.numRolls)->default_value(1), "number of rolls")
     ;
 
@@ -377,7 +384,10 @@ WorldObjectPtr createGround(const InputOptions & in)
   if(dice->is2D())
     vel.setValue(0.0, 0.0, myRandom());
   else
-    vel.setValue(myRandom(), myRandom(), myRandom());
+  {
+    //vel.setValue(myRandom(), myRandom(), myRandom());
+    vel.setValue(0.0, 0.0, myRandom());
+  }
   
   vel.normalize();
   vel *= myRandom(in.angularVelocity);
@@ -396,7 +406,7 @@ btScalar mass(const btScalar width, const btScalar height, const btScalar depth,
   return width * height * depth * density;
 }
 
-void printResults(const unsigned int (& results)[4])
+void printResults(const unsigned int (& results)[8])
 {
   using namespace dicephys;
 
@@ -404,4 +414,8 @@ void printResults(const unsigned int (& results)[4])
   ::std::cout << Dice::Orientation::HEIGHT << "\t" << results[Dice::Orientation::HEIGHT] << ::std::endl;
   ::std::cout << Dice::Orientation::WIDTH << "\t" << results[Dice::Orientation::WIDTH] << ::std::endl;
   ::std::cout << Dice::Orientation::DEPTH << "\t" << results[Dice::Orientation::DEPTH] << ::std::endl;
+  ::std::cout << "UNCOVERGED_" << Dice::Orientation::UNKNOWN << "\t" << results[Dice::Orientation::UNKNOWN + 4] << ::std::endl;
+  ::std::cout << "UNCOVERGED_" << Dice::Orientation::HEIGHT << "\t" << results[Dice::Orientation::HEIGHT + 4] << ::std::endl;
+  ::std::cout << "UNCOVERGED_" << Dice::Orientation::WIDTH << "\t" << results[Dice::Orientation::WIDTH + 4] << ::std::endl;
+  ::std::cout << "UNCOVERGED_" << Dice::Orientation::DEPTH << "\t" << results[Dice::Orientation::DEPTH + 4] << ::std::endl;
 }
